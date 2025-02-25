@@ -11,15 +11,20 @@ import java.util.function.Consumer;
 /**
  * Priority Queue Data Structure which uses a binary heap.
  * <p/>
- * It is unlimited in capacity, although there is no code to grow it after it has been constructed.
- * It can serve as a minPQ or a maxPQ (define "max" as either false or true, respectively).
+ * It is unlimited in capacity, although there is no code to grow it after it
+ * has been constructed.
+ * It can serve as a minPQ or a maxPQ (define "max" as either false or true,
+ * respectively).
  * <p/>
  * It can support the root at index 1 or the root at index 2 variants.
  * <p/>
- * It follows the code from Sedgewick and Wayne more or less. I have changed the names a bit. For example,
- * the methods to insert and remove the max (or min) element are called "give" and "take," respectively.
+ * It follows the code from Sedgewick and Wayne more or less. I have changed the
+ * names a bit. For example,
+ * the methods to insert and remove the max (or min) element are called "give"
+ * and "take," respectively.
  * <p/>
- * It operates on arbitrary Object types which implies that it requires a Comparator to be passed in.
+ * It operates on arbitrary Object types which implies that it requires a
+ * Comparator to be passed in.
  * <p/>
  * For all details on usage, please see PriorityQueueTest.java
  *
@@ -27,11 +32,18 @@ import java.util.function.Consumer;
  */
 public class PriorityQueue<K> implements Iterable<K> {
 
+    private int arity;
+
+    private K highestSpilled = null;
+
     /**
-     * Primary constructor that takes the max value, an actual array of elements, and a comparator.
+     * Primary constructor that takes the max value, an actual array of elements,
+     * and a comparator.
      *
-     * @param max        whether or not this is a Maximum Priority Queue as opposed to a Minimum PQ.
-     * @param binHeap    a pre-formed array with length one greater than the required capacity.
+     * @param max        whether or not this is a Maximum Priority Queue as opposed
+     *                   to a Minimum PQ.
+     * @param binHeap    a pre-formed array with length one greater than the
+     *                   required capacity.
      * @param first      the index of the root element.
      * @param last       the number of elements in binHeap
      * @param comparator a comparator for the type K
@@ -42,53 +54,70 @@ public class PriorityQueue<K> implements Iterable<K> {
         this.first = first;
         this.comparator = comparator;
         this.last = last;
-        //noinspection unchecked
+        this.arity = arity;
         this.binHeap = (K[]) binHeap;
         this.floyd = floyd;
     }
 
+    public void setArity(int arity) {
+        this.arity = arity;
+    }
+
     /**
-     * Secondary constructor which takes only the priority queue's maximum capacity and a comparator
+     * Secondary constructor which takes only the priority queue's maximum capacity
+     * and a comparator
      *
      * @param n          the desired maximum capacity.
      * @param first      the index to use for the first (root) element.
-     * @param max        whether or not this is a Maximum Priority Queue as opposed to a Minimum PQ.
+     * @param max        whether or not this is a Maximum Priority Queue as opposed
+     *                   to a Minimum PQ.
      * @param comparator a comparator for the type K
      */
     public PriorityQueue(int n, int first, boolean max, Comparator<K> comparator, boolean floyd) {
 
-        // NOTE that we reserve the first element of the binary heap, so the length must be n+1, not n
+        // NOTE that we reserve the first element of the binary heap, so the length must
+        // be n+1, not n
         this(max, new Object[n + first], first, 0, comparator, floyd);
     }
 
     /**
-     * Secondary constructor which takes only the priority queue's maximum capacity and a comparator
+     * Secondary constructor which takes only the priority queue's maximum capacity
+     * and a comparator
      *
      * @param n          the desired maximum capacity.
-     * @param max        whether or not this is a Maximum Priority Queue as opposed to a Minimum PQ.
+     * @param max        whether or not this is a Maximum Priority Queue as opposed
+     *                   to a Minimum PQ.
      * @param comparator a comparator for the type K
      */
-    public PriorityQueue(int n, boolean max, Comparator<K> comparator, boolean floyd) {
 
-        // NOTE that we reserve the first element of the binary heap, so the length must be n+1, not n
-        this(n, 1, max, comparator, floyd);
+    public PriorityQueue(int capacity, boolean max, Comparator<K> comparator, boolean floyd) {
+        this.max = max;
+        this.first = 1;
+        this.comparator = comparator;
+        this.last = 0;
+        this.floyd = floyd;
+        this.binHeap = (K[]) new Object[capacity + first];
     }
 
     /**
-     * Secondary constructor which takes only the priority queue's maximum capacity and a comparator
+     * Secondary constructor which takes only the priority queue's maximum capacity
+     * and a comparator
      *
      * @param n          the desired maximum capacity.
-     * @param max        whether or not this is a Maximum Priority Queue as opposed to a Minimum PQ.
+     * @param max        whether or not this is a Maximum Priority Queue as opposed
+     *                   to a Minimum PQ.
      * @param comparator a comparator for the type K
      */
     public PriorityQueue(int n, boolean max, Comparator<K> comparator) {
 
-        // NOTE that we reserve the first element of the binary heap, so the length must be n+1, not n
+        // NOTE that we reserve the first element of the binary heap, so the length must
+        // be n+1, not n
         this(n, 1, max, comparator, false);
     }
 
     /**
-     * Secondary constructor which takes only the priority queue's maximum capacity and a comparator
+     * Secondary constructor which takes only the priority queue's maximum capacity
+     * and a comparator
      *
      * @param n          the desired maximum capacity.
      * @param comparator a comparator for the type K
@@ -117,25 +146,40 @@ public class PriorityQueue<K> implements Iterable<K> {
      * @param key the value of the key to give
      */
     public void give(K key) {
-        if (last == binHeap.length - first)
-            last--; // if we are already at capacity, then we arbitrarily trash the least eligible element
-        // (even if it's more eligible than key).
-        binHeap[++last + first - 1] = key; // insert the key into the binary heap just after the last element
-        swimUp(last + first - 1); // reorder the binary heap
+        if (last == binHeap.length - first) {
+            K removed = take();
+            if (highestSpilled == null || comparator.compare(removed, highestSpilled) > 0) {
+                highestSpilled = removed;
+            }
+        }
+        binHeap[++last + first - 1] = key;
+        swimUp(last + first - 1);
     }
 
+    public K getHighestSpilled() {
+        return highestSpilled;
+    }
+
+
     /**
-     * Remove the root element from this Priority Queue and adjust the binary heap accordingly.
-     * If max is true, then the result will be the maximum element, else the minimum element.
+     * Remove the root element from this Priority Queue and adjust the binary heap
+     * accordingly.
+     * If max is true, then the result will be the maximum element, else the minimum
+     * element.
      * NOTE that this method is called DelMax (or DelMin) in the book.
      *
-     * @return If max is true, then the maximum element, otherwise the minimum element.
+     * @return If max is true, then the maximum element, otherwise the minimum
+     *         element.
      * @throws PQException if this priority queue is empty
      */
-    public K take() throws PQException {
-        if (isEmpty()) throw new PQException("Priority queue is empty");
-        if (floyd) return doTake(this::snake);
-        else return doTake(this::sink);
+    public K take() {
+        // if (isEmpty()) throw new PQException("Priority queue is empty");
+        if (isEmpty())
+            return null;
+        if (floyd)
+            return doTake(this::snake);
+        else
+            return doTake(this::sink);
     }
 
     /**
@@ -143,7 +187,8 @@ public class PriorityQueue<K> implements Iterable<K> {
      * reorganizes the heap to maintain the priority queue properties,
      * and applies the provided function to the root index.
      *
-     * @param f a consumer function that manipulates the root index to maintain the heap order.
+     * @param f a consumer function that manipulates the root index to maintain the
+     *          heap order.
      * @return the root element of the priority queue before reorganization.
      */
     K doTake(Consumer<Integer> f) {
@@ -153,7 +198,7 @@ public class PriorityQueue<K> implements Iterable<K> {
         binHeap[last + first] = null; // prevent loitering
         return result;
     }
-
+   
     /**
      * Sink the element at index k down
      */
@@ -176,6 +221,11 @@ public class PriorityQueue<K> implements Iterable<K> {
     void swimUp(int k) {
         int i = k;
         while (i > first && unordered(parent(i), i)) {
+            if (binHeap[i] == null || binHeap[parent(i)] == null) {
+                throw new IllegalStateException(
+                        "Null value found in swimUp(): binHeap[" + i + "] or binHeap[" + parent(i) + "] is null");
+            }
+
             swap(i, parent(i));
             i = parent(i);
         }
@@ -183,7 +233,8 @@ public class PriorityQueue<K> implements Iterable<K> {
 
     /**
      * Compare the elements at indices i and j.
-     * We expect the first index (the smaller one) to be greater than the second, assuming that max is true.
+     * We expect the first index (the smaller one) to be greater than the second,
+     * assuming that max is true.
      * In this case, we return false.
      *
      * @param i the lower index, numerically
@@ -191,12 +242,20 @@ public class PriorityQueue<K> implements Iterable<K> {
      * @return true if the values are out of order.
      */
     boolean unordered(int i, int j) {
+        if (i == 0 || j == 0) {
+            return false;
+        }
+        if (binHeap[i] == null || binHeap[j] == null) {
+            throw new IllegalStateException(
+                    "Null value found in unordered(): binHeap[" + i + "] or binHeap[" + j + "] is null");
+        }
         return (comparator.compare(binHeap[i], binHeap[j]) > 0) ^ max;
     }
 
     /**
      * Non-mutating iterator over all values of this PriorityQueue.
-     * NOTE: after the first element, there is no definite ordering of the remaining elements.
+     * NOTE: after the first element, there is no definite ordering of the remaining
+     * elements.
      * NOTE: this method is really not truly a method of the PriorityQueue API.
      * It is here only for convenience.
      *
@@ -205,28 +264,41 @@ public class PriorityQueue<K> implements Iterable<K> {
     public Iterator<K> iterator() {
         Collection<K> copy = new ArrayList<>(Arrays.asList(Arrays.copyOf(binHeap, last + first)));
         Iterator<K> result = copy.iterator();
-        if (first > 0) result.next(); // strip off the leading null value.
+        if (first > 0)
+            result.next(); // strip off the leading null value.
         return result;
     }
 
     /**
      * Adjusts a subtree rooted at index k to ensure it satisfies the heap property.
      * The method reorganizes the binary heap by comparing parent and child nodes,
-     * swapping their positions if necessary, until the correct heap order is maintained.
+     * swapping their positions if necessary, until the correct heap order is
+     * maintained.
      *
-     * @param k the starting index of the element in the heap that needs to be adjusted.
+     * @param k the starting index of the element in the heap that needs to be
+     *          adjusted.
      * @param p a predicate that determines the heap condition to be satisfied.
-     *          It takes two indices (parent and child) and returns true if the parent satisfies the heap property relative to the child.
-     * @return the final position of the element originally at index k after reorganization.
+     *          It takes two indices (parent and child) and returns true if the
+     *          parent satisfies the heap property relative to the child.
+     * @return the final position of the element originally at index k after
+     *         reorganization.
      */
     private int doHeapify(int k, BiPredicate<Integer, Integer> p) {
         int i = k;
         while (firstChild(i) <= last + first - 1) {
-            int j = firstChild(i);
-            if (j < last + first - 1 && unordered(j, j + 1)) j++;
-            if (p.test(i, j)) break;
-            swap(i, j);
-            i = j;
+            int bestChild = firstChild(i);
+            int lastChild = Math.min(bestChild + 3, last + first - 1); // Ensure within bounds
+
+            for (int j = bestChild + 1; j <= lastChild; j++) {
+                if (unordered(bestChild, j)) {
+                    bestChild = j;
+                }
+            }
+
+            if (p.test(i, bestChild))
+                break;
+            swap(i, bestChild);
+            i = bestChild;
         }
         return i;
     }
@@ -244,7 +316,8 @@ public class PriorityQueue<K> implements Iterable<K> {
      * Get the index of the parent of the element at index k
      */
     private int parent(int k) {
-        return (k + 1 - first) / 2 + first - 1;
+        return (k - first) / 4 + first;
+
     }
 
     /**
@@ -252,7 +325,7 @@ public class PriorityQueue<K> implements Iterable<K> {
      * The index of the second child will be one greater than the result.
      */
     private int firstChild(int k) {
-        return (k + 1 - first) * 2 + first - 1;
+        return 4 * (k - first) + first + 1;
     }
 
     /**
@@ -272,19 +345,16 @@ public class PriorityQueue<K> implements Iterable<K> {
     private final boolean max;
     private final int first;
     private final Comparator<K> comparator;
-    private final K[] binHeap; // binHeap[i] is ith element of binary heap (first element is reserved)
-    private int last; // number of elements in the binary heap
-    private final boolean floyd; //Determine whether floyd's snake method is on or off inside the take method
+    private final K[] binHeap; 
+    private int last; 
+    private final boolean floyd; 
 
     public static void main(String[] args) {
         doMain();
     }
 
-    /**
-     * XXX Huh?
-     */
     static void doMain() {
-        String[] s1 = new String[5]; //Created a string type array with size 5
+        String[] s1 = new String[5]; // Created a string type array with size 5
         s1[0] = "A";
         s1[1] = "B";
         s1[2] = "C";
@@ -292,13 +362,21 @@ public class PriorityQueue<K> implements Iterable<K> {
         s1[4] = "E";
         boolean max = true;
         boolean floyd = true;
-        Iterable<String> PQ_string_floyd = new PriorityQueue<>(max, s1, 1, 5, Comparator.comparing(String::toString), floyd);
-        Iterable<String> PQ_string_nofloyd = new PriorityQueue<>(max, s1, 1, 5, Comparator.comparing(String::toString), false);
-        Integer[] s2 = new Integer[5]; //created an Integer type array with size 5
+        Iterable<String> PQ_string_floyd = new PriorityQueue<>(max, s1, 1, 5, Comparator.comparing(String::toString),
+                floyd);
+        Iterable<String> PQ_string_nofloyd = new PriorityQueue<>(max, s1, 1, 5, Comparator.comparing(String::toString),
+                false);
+        Integer[] s2 = new Integer[5]; // created an Integer type array with size 5
         for (int i = 0; i < 5; i++) {
             s2[i] = i;
         }
-        Iterable<Integer> PQ_int_floyd = new PriorityQueue<>(max, s2, 1, 5, Comparator.comparing(Integer::intValue), floyd);
-        Iterable<Integer> PQ_int_nofloyd = new PriorityQueue<>(max, s2, 1, 5, Comparator.comparing(Integer::intValue), false);
+        Iterable<Integer> PQ_int_floyd = new PriorityQueue<>(max, s2, 1, 5, Comparator.comparing(Integer::intValue),
+                floyd);
+        Iterable<Integer> PQ_int_nofloyd = new PriorityQueue<>(max, s2, 1, 5, Comparator.comparing(Integer::intValue),
+                false);
+    }
+
+    public void add(int num) {
+        give((K) Integer.valueOf(num));
     }
 }

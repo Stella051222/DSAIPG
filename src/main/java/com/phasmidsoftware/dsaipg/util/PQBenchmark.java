@@ -1,153 +1,228 @@
-/*
- * Copyright (c) 2024. Robin Hillyard
- */
-package com.phasmidsoftware.dsaipg.util;
+// package com.phasmidsoftware.dsaipg.util;
 
-import com.phasmidsoftware.dsaipg.adt.pq.PQException;
-import com.phasmidsoftware.dsaipg.adt.pq.PriorityQueue;
+// import com.phasmidsoftware.dsaipg.adt.pq.PQException;
+// import com.phasmidsoftware.dsaipg.adt.pq.PriorityQueue;
+// import com.phasmidsoftware.dsaipg.adt.pq.FibonacciHeap;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Consumer;
+// import java.io.IOException;
+// import java.util.*;
+// import java.util.function.Consumer;
 
-import static com.phasmidsoftware.dsaipg.util.SortBenchmarkHelper.getWords;
+// /**
+//  * The {@code PQBenchmark} class is designed to benchmark operations performed
+//  * with priority queues.
+//  * It evaluates different heap configurations and reports execution times.
+//  */
+// public class PQBenchmark {
 
-/**
- * The {@code PQBenchmark} class is designed to benchmark operations performed with priority queues.
- * It includes methods to evaluate insertion and deletion performance using different configurations
- * and algorithms. This class uses external configuration for its settings and employs benchmarking
- * utilities to measure execution times of the operations.
- */
-public class PQBenchmark {
+//     private static final int INSERTIONS = 16000;
+//     private static final int REMOVALS = 4000;
+//     private static final int M = 4095; 
 
-    /**
-     * Constructs a new instance of PQBenchmark with the specified configuration.
-     *
-     * @param config the configuration object used to set up the benchmark
-     */
-    public PQBenchmark(Config config) {
-        this.config = config;
-    }
+//     public PQBenchmark(Config config) {
+//         this.config = config;
+//     }
 
-    /**
-     * The main method serves as the entry point for the PQBenchmark application. It initializes
-     * the configuration, logs application information, performs benchmarking for insertion and
-     * deletion operations with and without Floyd's method, and outputs the results.
-     *
-     * @param args command-line arguments, expected to specify word counts for benchmarking;
-     *             may be empty if no counts are provided.
-     * @throws IOException if an error occurs during configuration loading.
-     */
-    public static void main(String[] args) throws IOException {
-        Config config = Config.load(PQBenchmark.class);
-        // XXX this does not look at all correct. Why huskysort?
-        logger.info("SortBenchmark.main: " + config.get("huskysort", "version") + " with word counts: " + Arrays.toString(args));
-        if (args.length == 0) logger.warn("No word counts specified on the command line");
-        PQBenchmark benchmark = new PQBenchmark(config);
-        System.out.println("with floyd: " + benchmark.insertDeleteN(10000, 1000, true));
-        System.out.println("no floyd: " + benchmark.insertDeleteN(10000, 1000, false));
-    }
+//     public static void main(String[] args) throws IOException {
+//         System.out.println("DEBUG: main() started");
+//         try{
+//             Config config = Config.load(PQBenchmark.class);
+//             PQBenchmark benchmark = new PQBenchmark(config);
+        
+//             System.out.println("\n===== Binary Heap Results =====");
+//             System.out.println("DEBUG: Calling insertDeleteN for Binary Heap");
+//             double binaryHeapTime = benchmark.insertDeleteN(INSERTIONS, REMOVALS, false, 2);
+//             System.out.println("Binary Heap Time: " + binaryHeapTime);
+        
+//             System.out.println("\n===== Binary Heap (Floyd) Results =====");
+//             System.out.println("DEBUG: Calling insertDeleteN for Binary Heap (Floyd)");
+//             double binaryHeapFloydTime = benchmark.insertDeleteN(INSERTIONS, REMOVALS, true, 2);
+//             System.out.println("Binary Heap (Floyd) Time: " + binaryHeapFloydTime);
+        
+//             System.out.println("\n===== 4-ary Heap Results =====");
+//             System.out.println("DEBUG: Calling insertDeleteN for 4-ary Heap");
+//             double fourAryHeapTime = benchmark.insertDeleteN(INSERTIONS, REMOVALS, false, 4);
+//             System.out.println("4-ary Heap Time: " + fourAryHeapTime);
+        
+//             System.out.println("\n===== 4-ary Heap (Floyd) Results =====");
+//             System.out.println("DEBUG: Calling insertDeleteN for 4-ary Heap (Floyd)");
+//             double fourAryHeapFloydTime = benchmark.insertDeleteN(INSERTIONS, REMOVALS, true, 4);
+//             System.out.println("4-ary Heap (Floyd) Time: " + fourAryHeapFloydTime);
+        
+//             System.out.println("\n===== Fibonacci Heap Results =====");
+//             System.out.println("DEBUG: Calling fibonacciHeapTest");
+//             double fibonacciHeapTime = benchmark.fibonacciHeapTest(INSERTIONS, REMOVALS);
+//             System.out.println("Fibonacci Heap Time: " + fibonacciHeapTime);
+//         }catch (Exception e) {
+//             System.out.println("ERROR: Exception occurred in main()");
+//             e.printStackTrace(); 
+//         }
+       
+//     }
 
-    /**
-     * Inserts and conditionally deletes elements from a priority queue using Floyd insertion or standard insertion.
-     * This method processes an integer array by inserting elements into a priority queue and, based on a random condition,
-     * attempts to remove an element from the queue.
-     *
-     * @param a     the array of integers to be inserted into the priority queue
-     * @param floyd a flag that determines whether to use Floyd insertion method for the priority queue
-     */
-    // Insert and delete random integer array with floyd methods according to parameter
-    private void insertArray(int[] a, final boolean floyd) {
-        PriorityQueue<Integer> pq = new PriorityQueue<Integer>(a.length, true, Comparator.naturalOrder(), floyd);
-        final Random random = new Random();
-        for (int j : a) {
-            pq.give(j);
-            if (random.nextBoolean()) {
-                try {
-                    pq.take();
-                } catch (PQException e) {
-                    e.printStackTrace(); // TODO use logging
-                }
-            }
-        }
-    }
+//     /**
+//      * Inserts and deletes elements from a priority queue while tracking the
+//      * highest-priority spilled element.
+//      */
+//     private double insertDeleteN(final int n, int m, final boolean floyd, int arity) {
 
-    /**
-     * Performs a benchmark test by inserting and deleting elements, measuring the operation's execution time.
-     * This method uses the Benchmark_Timer to calculate the average runtime for the given operation.
-     *
-     * @param n      the number of random integers to be generated and processed.
-     * @param m      the number of times the benchmark test is repeated.
-     * @param floyd  a flag indicating whether the Floyd's heap construction method should be used during the insertion.
-     * @return the average execution time for the benchmark process, in milliseconds.
-     */
-    private double insertDeleteN(final int n, int m, final boolean floyd) {
-        final Random ran = new Random();
-        int[] random = new int[n];
-        for (int i = 0; i < n; i++) {
-            random[i] = ran.nextInt(n);
-        }
-        Benchmark<Boolean> bm = new Benchmark_Timer<>(
-                "testPQwithFloydoff",
-                null,
-                b -> insertArray(random, floyd),
-                null
-        );
-        return bm.run(true, m);
+//         System.out.println("\n===== Running Priority Queue (arity = " + arity + ", Floyd = " + floyd + ") =====");
 
-    }
+//         final Random rand = new Random();
+//         int[] randomArray = new int[n];
+//         for (int i = 0; i < n; i++) {
+//             randomArray[i] = rand.nextInt(n);
+//         }
 
-    /**
-     * For mergesort, the number of array accesses is actually six times the number of comparisons.
-     * That's because, in addition to each comparison, there will be approximately two copy operations.
-     * Thus, in the case where comparisons are based on primitives,
-     * the normalized time per run should approximate the time for one array access.
-     */
-    public final static TimeLogger[] timeLoggersLinearithmic = {
-            new TimeLogger("Raw time per run (mSec): ", null),
-            new TimeLogger("Normalized time per run (n log n): ", SortBenchmark::minComparisons)
-    };
+//         System.out.println("DEBUG: Calling insertArray() for arity = " + arity);
+//         List<Integer> spilledElements = insertArray(randomArray, floyd, arity);
+//         System.out.println("DEBUG: insertArray() finished for arity = " + arity);
 
-    final static LazyLogger logger = new LazyLogger(PQBenchmark.class);
+//         double averageSpilled = spilledElements.stream()
+//         .mapToInt(Integer::intValue)
+//         .average()
+//         .orElse(0.0);
 
-    /**
-     * This is the mean number of inversions in a randomly ordered set of n elements.
-     * For insertion sort, each (low-level) swap fixes one inversion, so on average, this number of swaps is required.
-     * The minimum number of comparisons is slightly higher.
-     *
-     * @param n the number of elements
-     * @return one quarter n-squared more or less.
-     */
-    static double meanInversions(int n) {
-        return 0.25 * n * (n - 1);
-    }
+// System.out.println("Total spilled elements: " + spilledElements.size());
+// System.out.println("Highest spilled element: " + (spilledElements.isEmpty() ? "None" : Collections.max(spilledElements)));
+// System.out.printf("Average spilled element: %.2f\n", averageSpilled);
 
-    private static Collection<String> lineAsList(String line) {
-        List<String> words = new ArrayList<>();
-        words.add(line);
-        return words;
-    }
 
-    private static Collection<String> getLeipzigWords(String line) {
-        return getWords(SortBenchmarkHelper.regexLeipzig, line);
-    }
+// System.out.println("DEBUG: Starting Benchmark_Timer for arity = " + arity);
+//         Benchmark<Boolean> bm = new Benchmark_Timer<>(
+//                 "Priority Queue (arity = " + arity + ", Floyd = " + floyd + ")",
+//                 null,
+//                 b -> insertArray(randomArray, floyd, arity),
+//                 null);
+      
+//         // return bm.run(true, m);
 
-    // CONSIDER: to be eliminated soon.
-    private static Benchmark<LocalDateTime[]> benchmarkFactory(String description, Consumer<LocalDateTime[]> sorter, Consumer<LocalDateTime[]> checker) {
-        return new Benchmark_Timer<>(
-                description,
-                (xs) -> Arrays.copyOf(xs, xs.length),
-                sorter,
-                checker
-        );
-    }
+//         double time = bm.run(true, m);
+//         System.out.println("DEBUG: Benchmark_Timer finished, time = " + time);
+    
+//         return time;
+//     }
 
-    private static final double LgE = Utilities.lg(Math.E);
+//     /**
+//      * Inserts elements into the heap and removes them while keeping track of the
+//      * highest-priority spilled element.
+//      */
+//     private List<Integer> insertArray(int[] array, final boolean floyd, int arity) {
+//         System.out.println("DEBUG: Running insertArray() for arity = " + arity);
 
-    boolean isConfigBoolean(String section, String option) {
-        return config.getBoolean(section, option);
-    }
+        
+//         Comparator<Integer> comparator = Comparator.naturalOrder();
+//         PriorityQueue<Integer> pq = new PriorityQueue<>(M, true, comparator, floyd);
+//         pq.setArity(arity);
 
-    private final Config config;
-}
+//         System.out.println("DEBUG: PriorityQueue created with arity = " + arity);
+
+//         List<Integer> spilledElements = new ArrayList<>();
+//         Integer highestSpilled = null;
+
+//         for (int j : array) {
+//             if (j < 0) continue;
+    
+//             pq.give(j);
+    
+//             if (pq.size() > M) {
+//                 Integer spilled = pq.take();
+//                 if (spilled != null) {
+//                     spilledElements.add(spilled);
+//                     if (highestSpilled == null || spilled > highestSpilled) {
+//                         highestSpilled = spilled;
+//                     }
+//                 }
+//             }
+//         }
+//         System.out.println("DEBUG: insertArray() finished for arity = " + arity);
+        
+//         return spilledElements; 
+//         }
+    
+      
+//         // if (highestSpilled == null) {
+//         //     highestSpilled = -1; 
+//         // }
+//         // System.out.println("Highest spilled element: " + highestSpilled);
+
+//         // int previousSize = pq.size();
+//         // int iteration = 0;
+//         // while (pq.size() > M && iteration < 100) {
+//         //     Integer spilled = pq.take();
+//         //     System.out.println("DEBUG: spilled element = " + spilled);
+//         //     iteration++;
+            
+//         //     if (pq.size() >= previousSize) {
+//         //         System.out.println("ERROR: Priority queue size is not decreasing, forcibly exiting!");
+//         //         break;
+//         //     }
+//         //     previousSize = pq.size();
+//         // }
+//         // if (iteration >= 100) {
+//         //     System.out.println("ERROR: Loop stuck, forcibly exiting!");
+//         // }
+  
+
+
+    
+//     /**
+//      * Benchmarks Fibonacci Heap performance.
+//      */
+//     private double fibonacciHeapTest(final int n, int m) {
+//         final Random rand = new Random();
+//         int[] randomArray = new int[n];
+//         for (int i = 0; i < n; i++) {
+//             randomArray[i] = rand.nextInt(n);
+//         }
+
+//         Benchmark<Boolean> bm = new Benchmark_Timer<>(
+//                 "Fibonacci Heap",
+//                 null,
+//                 b -> {
+//                     if (b) {
+//                         insertFibonacciHeap(randomArray);
+//                     }
+//                 },
+//                 null);
+
+//         return bm.run(true, m);
+//     }
+
+//     /**
+//      * Inserts elements into a Fibonacci Heap and removes elements.
+//      */
+//     private void insertFibonacciHeap(int[] array) {
+//         Comparator<Integer> comparator = Comparator.naturalOrder();
+//         FibonacciHeap<Integer> fibHeap = new FibonacciHeap<>(comparator);
+//         final Random random = new Random();
+
+//         List<Integer> spilledElements = new ArrayList<>();
+//         Integer highestSpilled = null;
+
+//         for (int j : array) {
+//             fibHeap.give(j);
+//             if (fibHeap.size() > M) {
+//                 Integer spilled = fibHeap.take();
+//                 if (spilled != null) {
+//                     spilledElements.add(spilled);
+//                     if (highestSpilled == null || spilled > highestSpilled) {
+//                         highestSpilled = spilled;
+//                     }
+//                 }
+//             }
+//         }
+
+//         double averageSpilled = spilledElements.stream()
+//                 .mapToInt(Integer::intValue)
+//                 .average()
+//                 .orElse(0.0);
+
+//         System.out.println("\n===== Fibonacci Heap Results =====");
+//         System.out.println("Total spilled elements: " + spilledElements.size());
+//         System.out.println("Highest spilled element: " + highestSpilled);
+//         System.out.printf("Average spilled element: %.2f\n", averageSpilled);
+//     }
+
+//     private final Config config;
+// }
