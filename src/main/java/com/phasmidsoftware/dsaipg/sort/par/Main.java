@@ -75,11 +75,16 @@ public class Main {
     }
 
     private static void processCommand(String x, String y) {
-        if (x.equalsIgnoreCase("N")) setConfig(x, Integer.parseInt(y));
-        else
-            // TODO sort this out
-            if (x.equalsIgnoreCase("P")) //noinspection ResultOfMethodCallIgnored
-                ForkJoinPool.getCommonPoolParallelism();
+        if (x.equalsIgnoreCase("N")) {
+            setConfig(x, Integer.parseInt(y));
+        } else if (x.equalsIgnoreCase("P")) {
+           
+            int parallelism = ForkJoinPool.getCommonPoolParallelism();
+            System.out.println("Common pool parallelism level: " + parallelism);
+            setConfig(x, parallelism);
+        } else {
+            System.out.println("Unknown command: " + x);
+        }
     }
 
     private static void setConfig(String x, int i) {
