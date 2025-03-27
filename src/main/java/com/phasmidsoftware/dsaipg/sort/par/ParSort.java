@@ -42,13 +42,10 @@ final class ParSort {
         if (to - from < cutoff) {
             // CompletableFuture<int[]> completableFuture1 = null;
             // CompletableFuture<int[]> completableFuture2 = null;
-
             
             // TO BE IMPLEMENTED 
-
             Arrays.sort(array, from, to);
             // END SOLUTION
-
 
             // CompletableFuture<int[]> completableFuture = completableFuture1.thenCombine(completableFuture2, ParSort::doMerge);
             // completableFuture.whenComplete((result, throwable) -> System.arraycopy(result, 0, array, from, result.length));

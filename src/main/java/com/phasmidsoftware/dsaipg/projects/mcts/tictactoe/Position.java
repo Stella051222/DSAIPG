@@ -64,9 +64,10 @@ public class Position {
         if (player == last) throw new RuntimeException("consecutive moves by same player: " + player);
         int[][] matrix = copyGrid();
         if (matrix[x][y] < 0) {
-            // TO BE IMPLEMENTED 
-             return null;
-            // END SOLUTION
+            //////
+            matrix[x][y] = player;
+            return new Position(matrix, this.count + 1, player);
+            //////
         }
         throw new RuntimeException("Position is occupied: " + x + ", " + y);
     }
@@ -82,9 +83,12 @@ public class Position {
         for (int i = 0; i < gridSize; i++)
             for (int j = 0; j < gridSize; j++)
                 if (grid[i][j] < 0)
-                    // TO BE IMPLEMENTED 
+                ///////
+                result.add(new int[]{i, j});
+                //////
+            
          ;
-        // END SOLUTION
+        
         return result;
     }
 
@@ -144,9 +148,31 @@ public class Position {
      * @return true if there are three cells in a line that are the same and equal to the last player.
      */
     boolean threeInARow() {
-        // TO BE IMPLEMENTED 
-         return false;
-        // END SOLUTION
+        // // TO BE IMPLEMENTED 
+        //  return false;
+        // // END SOLUTION
+
+        // Check rows.
+    for (int i = 0; i < gridSize; i++) {
+        if (grid[i][0] == last && grid[i][1] == last && grid[i][2] == last) {
+            return true;
+        }
+    }
+    // Check columns.
+    for (int j = 0; j < gridSize; j++) {
+        if (grid[0][j] == last && grid[1][j] == last && grid[2][j] == last) {
+            return true;
+        }
+    }
+    // Check main diagonal.
+    if (grid[0][0] == last && grid[1][1] == last && grid[2][2] == last) {
+        return true;
+    }
+    // Check anti-diagonal.
+    if (grid[0][2] == last && grid[1][1] == last && grid[2][0] == last) {
+        return true;
+    }
+    return false;
     }
 
     /**
